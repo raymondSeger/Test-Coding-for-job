@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Hello World. This is the Script for the Dice Game</h1>
+
+    <script>
+        // starting default value
+        var game                = {};
+        window.game             = game;  
+        game.how_many_players   = 3;
+        game.how_many_dice      = 3;
+        game.players_data       = [];
+        game.game_is_finished   = false;
+
+        // the function to set how many players and dice
+        function setup_game(how_many_players, how_many_dice) {
+            game.how_many_players   = how_many_players;
+            game.how_many_dice      = how_many_dice;
+
+            start_game();
+        }
+
+        function start_game(){
+            // setup the players dice default
+            for (var step = 0; step < game.how_many_players; step++) {
+                var array_of_dices = roll_dice(game.how_many_dice);
+                game.players_data[step] = {
+                    "id"    : step,
+                    "name"  : "Player_" + step,
+                    "score" : 0,
+                    "dices" : array_of_dices
+                }
+            }
+            
+            // check if all players are empty. If yes, throw dice again.
+            while (game.game_is_finished == false) {
+                evaluate_the_dices_then_reduce_their_dice_or_add_score();
+            }
+
+            // announce the winner
+            if(game.game_is_finished == true) {
+                var biggest_score_player_name         = undefined;
+                var biggest_score_player_the_score_is = 0;
+                for (var player_data of game.players_data) {
+                    if( player_data["score"] >= biggest_score_player_the_score_is ) {
+                        biggest_score_player_name         = player_data["name"];
+                        biggest_score_player_the_score_is = player_data["score"];
+                    }
+                }
+                console.log("Winner is " + biggest_score_player_name + ". Score is " + biggest_score_player_the_score_is );
+            }
+        }
+
+
+        function roll_dice(how_many_dice){
+            var array_number_to_return = [];
+            for (var step = 0; step < how_many_dice; step++) {
+                // get number from 1 to 6
+                var random_number = Math.floor( Math.random() * 6 ) + 1;
+                array_number_to_return.push(random_number);
+            }
+            return array_number_to_return;
+        }
+
+        function evaluate_the_dices_then_reduce_their_dice_or_add_score() {
+            // the value of the dice is SIX!
+            for (var player_data of game.players_data) {
+                // check if any of the dices is 6, if yes, remove it and add the score + 1
+                player_data["dices"].forEach(function(one_dice, index) {
+                    if(one_dice == 6) {
+                        player_data["score"] = player_data["score"] + 1;
+                        player_data["dices"].splice(index, 1) 
+                    }
+                });
+            }
+
+            // the value of the dice is ONE!
+            for (var player_data of game.players_data) {
+                // check if any of the dices is 1, if yes, remove it and add it as elements to be given to his "neighbor"
+                player_data["dices"].forEach(function(one_dice, index) {
+                    if(one_dice == 1) {
+                        player_data["dices"].splice(index, 1) 
+                        // give it to his neighbor
+                        var this_player_id = player_data["id"];
+                        // check if there's player_X (X is the number after this guy's ID, if no, give to player #0)
+                        if (game.players_data[this_player_id + 1] !== undefined) {
+                            game.players_data[this_player_id + 1]["dices"].push(1);
+                        } else {
+                            game.players_data[0]["dices"].push(1);
+                        }
+                    }
+                });
+            }
+
+            // check if any players still have dices
+            var some_player_still_have_dice = false;
+            for (var player_data of game.players_data) {
+                if(player_data["dices"].length > 0) {
+                    some_player_still_have_dice = true;
+                }
+            }
+
+            if(some_player_still_have_dice == false) {
+                game.game_is_finished = true;
+            }
+
+            // new round! roll dices
+            for (var player_data of game.players_data) {
+                var array_of_dices = roll_dice( player_data["dices"].length );
+                player_data["dices"] = array_of_dices;
+            }
+
+        }
+
+        setup_game(3, 4);
+    </script>
+
+</body>
+</html>
